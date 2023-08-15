@@ -16,12 +16,11 @@ JamboAPI CMS is an open source headless CMS for building Content APIs.
 
 See the [installation guide](https://jambo.dahovi.com/docs/installation/) for prerequisites and instructions.
 
-\`\`\`bash
-git clone https://github.com/dahovigroup/jamboapicms.git
-cd jamboapicms
-// install
-\`\`\`
-
+```sh
+  git clone https://github.com/dahovigroup/jamboapicms.git
+  cd jamboapicms
+  // install
+```
 ## Contributing
 
 Contributions are welcome and important to improve this open source project.

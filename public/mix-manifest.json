@@ -1,0 +1,23 @@
+{
+    "/js/app.js": "/js/app.js?id=a489bab5bb2ceb9bd107397c9b326b99",
+    "/js/form.js": "/js/form.js?id=1c80589bc032ae77586baa1331cd1a8a",
+    "/js/partials/home.js": "/js/partials/home.js?id=12cc9b5bb78a4e48cd626c2dc90c563d",
+    "/js/partials/profile.js": "/js/partials/profile.js?id=1fc6fd6cd9beac6abe1cb2fa72c87855",
+    "/js/partials/project.js": "/js/partials/project.js?id=10c9d06f56ba44618856fed8edf76ff7",
+    "/js/partials/project.settings.js": "/js/partials/project.settings.js?id=ed986c112050024ccf12e32d709370c5",
+    "/js/partials/project.settings.locales.js": "/js/partials/project.settings.locales.js?id=cd579c39e4b82da9b732dddd34047d02",
+    "/js/partials/project.settings.users.js": "/js/partials/project.settings.users.js?id=ee7e136a60c159eb164f45b7f93e10a7",
+    "/js/partials/project.settings.api.js": "/js/partials/project.settings.api.js?id=3a1c889f64c6584f32889897be52d377",
+    "/js/partials/project.settings.webhooks.js": "/js/partials/project.settings.webhooks.js?id=d42943d3897fd8e1cc050ac8ac5eb145",
+    "/js/partials/project.settings.webhooks.logs.js": "/js/partials/project.settings.webhooks.logs.js?id=c4d4090655986db275c3bc0543b8730a",
+    "/js/partials/project.collection.js": "/js/partials/project.collection.js?id=5aff8f40136f8ec5655b5a6067427135",
+    "/js/partials/project.collection.show.js": "/js/partials/project.collection.show.js?id=e885dfac8de138b73a288d61d9352041",
+    "/js/partials/project.content.js": "/js/partials/project.content.js?id=06237d60d047dc2a1036811b1253a897",
+    "/js/partials/project.content.list.js": "/js/partials/project.content.list.js?id=bdbe6abe6a2fb8f674d01b5e3591ce9e",
+    "/js/partials/project.content.new.js": "/js/partials/project.content.new.js?id=2548e7064102ebef8e1e21310256938b",
+    "/js/partials/project.content.edit.js": "/js/partials/project.content.edit.js?id=e37cddcd519875cf7e8982e6dc854cfa",
+    "/js/partials/project.content.forms.js": "/js/partials/project.content.forms.js?id=0e9de023a15564135a907260883f49a4",
+    "/js/partials/project.content.forms.show.js": "/js/partials/project.content.forms.show.js?id=e902582b3d227f57d6a188d024748ab3",
+    "/js/partials/project.media.js": "/js/partials/project.media.js?id=a30f127e838ae0991a27519c0df8fe3b",
+    "/css/app.css": "/css/app.css?id=625344c58283d54470e0eb12193f84fd"
+}

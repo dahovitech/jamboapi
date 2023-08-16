@@ -1,0 +1,274 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+.field_icon {
+    width: 42px; height: 42px;
+}
+.field_icon_xl {
+    width: 48px; height:48px;
+}
+
+.vue__time-picker input.display-time {
+    border: 1px solid #d2d2d2;
+    width: 10em;
+    height: auto !important;
+    padding-top: 0.5rem !important;
+    padding-right: 0.75rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 0.75rem !important;
+    font-size: 1em;
+}
+
+.pagination {
+    display: -ms-flexbox;
+    display: flex;
+    padding-left: 0;
+    list-style: none;
+    border-radius: 0.25rem;
+}
+
+.page-link {
+    position: relative;
+    display: block;
+    padding: 20px;
+    margin-left: -1px;
+    line-height: 1.25;
+    color: #007bff;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+}
+
+.page-link:hover {
+    z-index: 2;
+    color: #0056b3;
+    text-decoration: none;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.page-link:focus {
+    z-index: 3;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.page-item:first-child .page-link {
+    margin-left: 0;
+    border-top-left-radius: 0.125rem;
+    border-bottom-left-radius: 0.125rem;
+}
+
+.page-item:last-child .page-link {
+    border-top-right-radius: 0.125rem;
+    border-bottom-right-radius: 0.125rem;
+}
+
+.page-item.active .page-link {
+    z-index: 3;
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    cursor: auto;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+.pagination-lg .page-link {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.25rem;
+    line-height: 1.5;
+}
+
+.pagination-lg .page-item:first-child .page-link {
+    border-top-left-radius: 0.125rem;
+    border-bottom-left-radius: 0.125rem;
+}
+
+.pagination-lg .page-item:last-child .page-link {
+    border-top-right-radius: 0.125rem;
+    border-bottom-right-radius: 0.125rem;
+}
+
+.pagination-sm .page-link {
+    padding: 0.75rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.pagination-sm .page-item:first-child .page-link {
+    border-top-left-radius: 0.125rem;
+    border-bottom-left-radius: 0.125rem;
+}
+
+.pagination-sm .page-item:last-child .page-link {
+    border-top-right-radius: 0.125rem;
+    border-bottom-right-radius: 0.125rem;
+}
+
+.v-select input, .v-select .vs--open input, .v-select .vs__search, .v-select .vs__search:focus {
+    padding: 0.60rem;
+    margin: 0 !important;
+}
+.v-select input::placeholder {
+    color: rgba(209, 213, 219, 1);
+}
+.v-select .vs__dropdown-toggle, .v-select .vs--open .vs__dropdown-toggle {
+    padding: 0 0 0 0 !important;
+    border-color: rgba(209, 213, 219, 1);
+    border-radius: 0.125rem;
+}
+.v-select  .vs__selected {
+    margin: 10px 6px !important;
+}
+.v-select .vs__dropdown-menu {
+    max-height: 122px !important;
+}
+.v-select .vs__dropdown-option--disabled {
+    display: none;
+}
+
+/* Toggle A */
+input:checked ~ .dot {
+    transform: translateX(100%);
+    background-color: #48bb78;
+}
+/* Toggle B */
+input:checked ~ .dot {
+    transform: translateX(100%);
+    background-color: #48bb78;
+}
+
+.ql-toolbar.ql-snow {
+    border-radius: 0.125rem 0.125rem 0 0 !important;
+    border-color: rgba(209, 213, 219, 1) !important;
+}
+.ql-container.ql-snow {
+    border-radius: 0 0 0.125rem 0.125rem !important;
+    border-color: rgba(209, 213, 219, 1) !important;
+}
+
+.tooltip {
+    display: block !important;
+    z-index: 10000;
+}
+
+.tooltip .tooltip-inner {
+    background: black;
+    color: white;
+    border-radius: 16px;
+    padding: 5px 10px 4px;
+}
+
+.tooltip .tooltip-arrow {
+    width: 0;
+    height: 0;
+    border-style: solid;
+    position: absolute;
+    margin: 5px;
+    border-color: black;
+    z-index: 1;
+}
+
+.tooltip[x-placement^="top"] {
+    margin-bottom: 5px;
+}
+
+.tooltip[x-placement^="top"] .tooltip-arrow {
+    border-width: 5px 5px 0 5px;
+    border-left-color: transparent !important;
+    border-right-color: transparent !important;
+    border-bottom-color: transparent !important;
+    bottom: -5px;
+    left: calc(50% - 5px);
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.tooltip[x-placement^="bottom"] {
+    margin-top: 5px;
+}
+
+.tooltip[x-placement^="bottom"] .tooltip-arrow {
+    border-width: 0 5px 5px 5px;
+    border-left-color: transparent !important;
+    border-right-color: transparent !important;
+    border-top-color: transparent !important;
+    top: -5px;
+    left: calc(50% - 5px);
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.tooltip[x-placement^="right"] {
+    margin-left: 5px;
+}
+
+.tooltip[x-placement^="right"] .tooltip-arrow {
+    border-width: 5px 5px 5px 0;
+    border-left-color: transparent !important;
+    border-top-color: transparent !important;
+    border-bottom-color: transparent !important;
+    left: -5px;
+    top: calc(50% - 5px);
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.tooltip[x-placement^="left"] {
+    margin-right: 5px;
+}
+
+.tooltip[x-placement^="left"] .tooltip-arrow {
+    border-width: 5px 0 5px 5px;
+    border-top-color: transparent !important;
+    border-right-color: transparent !important;
+    border-bottom-color: transparent !important;
+    right: -5px;
+    top: calc(50% - 5px);
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.tooltip.popover .popover-inner {
+    background: #f9f9f9;
+    color: black;
+    padding: 24px;
+    border-radius: 5px;
+    box-shadow: 0 5px 30px rgba(black, .1);
+}
+
+.tooltip.popover .popover-arrow {
+    border-color: #f9f9f9;
+}
+
+.tooltip[aria-hidden='true'] {
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity .15s, visibility .15s;
+}
+
+.tooltip[aria-hidden='false'] {
+    visibility: visible;
+    opacity: 1;
+    transition: opacity .15s;
+}
+
+.vc-chrome {
+	position: absolute;
+	top: 35px;
+	right: 0;
+	z-index: 9;
+}
+.current-color {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	background-color: #000;
+	cursor: pointer;
+}

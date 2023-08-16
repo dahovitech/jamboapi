@@ -1,0 +1,13 @@
+{
+    "Whoops! Something went wrong.": "Oups ! Une erreur s'est produite.",
+    "Email": "Adresse e-mail",
+    "Password": "Mot de passe",
+    "Remember me": "Se souvenir de moi",
+    "Forgot your password?": "Mot de passe oublié ?",
+    "Log in": "Connexion",
+    "Forgot your password? No problem. Just let us know your email address and we will email you a password reset link that will allow you to choose a new one.": "Mot de passe oublié ? Pas de problème. Indiquez-nous simplement votre adresse e-mail et nous vous enverrons un lien de réinitialisation qui vous permettra d'en choisir un nouveau.",
+    "Email Password Reset Link": "Envoyer le lien de réinitialisation du mot de passe par e-mail",
+    "Confirm Password": "Confirmer le mot de passe",
+    "Reset Password": "Réinitialiser le mot de passe",
+    "Project name is required": "Le nom du projet est obligatoire"
+  }

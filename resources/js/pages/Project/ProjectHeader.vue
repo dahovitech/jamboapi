@@ -6,20 +6,23 @@
             </div>
             <div class="text-sm">{{ project.description }}</div>
         </div>
-        <div class="flex items-center">
-            <router-link v-if="typeof project.id !== 'undefined' && checkRole(['admin'+project.id])" :to="{name: 'projects.settings', params: { project_id: project.id }}" :exact-active-class="'bg-none'" class="text-xl text-gray-600 cursor-pointer"><i class="fas fa-cog"></i></router-link>
-        </div>
+        <projectActions :project="project"></projectActions>
     </div>
 </template>
 
 <script>
-import checkRole from '../../checkrole'
+import UiModal from '../../UI/Modal.vue'
+import UiButton from '../../UI/Button.vue'
+import ProjectActions from './ProjectActions'
+
 
 export default {
     props: ['project'],
+    components: {
+        UiModal,
+        UiButton,
+        ProjectActions,
 
-    methods: {
-        checkRole
     }
 }
 </script>

@@ -29,7 +29,8 @@ Route::middleware('auth:web')->prefix('admin')->group(function(){
         Route::get('/', [ProjectsController::class, 'index']);
         Route::post('/', [ProjectsController::class, 'store'])->middleware(['role:super_admin']);
         Route::get('/{id}', [ProjectsController::class, 'show']);
-        Route::post('/update/{id}', [ProjectsController::class, 'update']);
+        Route::get('/export/{id}', [ProjectsController::class, 'export']);
+        Route::post('/import', [ProjectsController::class, 'import']);
         Route::delete('/delete/{id}', [ProjectsController::class, 'delete'])->middleware(['role:super_admin']);
 
         Route::prefix('settings')->middleware(['role:super_admin'])->group(function(){

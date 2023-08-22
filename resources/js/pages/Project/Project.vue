@@ -2,7 +2,6 @@
     <div>
         <div class="w-full xl:w-1/2 lg:w-3/4 m-auto mt-5">
             <project-header :project="project" class="mb-3"></project-header>
-            
             <div class="grid grid-cols-1 sm:grid-cols-2">
                 <div class="col p-4" v-if="checkRole(['admin'+project.id])">
                     <div class="inline-flex mb-5">

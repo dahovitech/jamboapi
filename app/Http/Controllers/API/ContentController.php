@@ -53,7 +53,7 @@ class ContentController extends Controller {
 
         if($request->has('where')){
             $where = $request->get('where');
-            if(!is_array($where)) return response(['error' => 'Incorrect where statement. See documentation: https://jambo.dahovi.com/docs/content_api.html#where-clauses'], 422);
+            if(!is_array($where)) return response(['error' => 'Incorrect where statement. See documentation: https://jambo.dahovi.com/docs/content-api/#where-clauses'], 422);
 
             if (!is_numeric(array_key_first($where)) || array_key_first($where) != 'or') {
                 $multiDim = false;
@@ -349,7 +349,7 @@ class ContentController extends Controller {
 
         if($request->has('whereRelation')){
             $whereRelation = $request->get('whereRelation');
-            if(!is_array($whereRelation)) return response(['error' => 'Incorrect whereRelation statement. See documentation: https://jambo.dahovi.com/docs/content_api.html#where-through-relation'], 422);
+            if(!is_array($whereRelation)) return response(['error' => 'Incorrect whereRelation statement. See documentation: https://jambo.dahovi.com/docs/content-api/#where-through-relation'], 422);
 
             foreach ($whereRelation as $key => $value) {
                 $mainField = CollectionField::where('project_id', $project->id)->where('collection_id', $collection->id)->where('name', $key)->first();
@@ -416,7 +416,7 @@ class ContentController extends Controller {
         }
 
         if($request->has('offset') && !$request->has('limit')){
-            return response(['error' => 'Incorrect offset statement. Offset must be used with limit. Documentation: https://jambo.dahovi.com/docs/content_api.html#limit'], 422);
+            return response(['error' => 'Incorrect offset statement. Offset must be used with limit. Documentation: https://jambo.dahovi.com/docs/content-api/#limit'], 422);
         }
 
         if($request->has('offset')){

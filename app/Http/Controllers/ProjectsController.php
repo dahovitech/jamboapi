@@ -7,18 +7,29 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
+
 namespace App\Http\Controllers;
 
+use Exception;
+use App\Models\Form;
 use App\Models\User;
+use App\Models\Media;
+use App\Models\Content;
 use App\Models\Project;
 use App\Models\Webhook;
 use App\Models\Collection;
+use App\Models\ContentMeta;
 use Illuminate\Http\Request;
+use App\Template\BlogTemplate;
+use App\Template\ShopTemplate;
 use App\Models\CollectionField;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\PersonalAccessToken;
 use Spatie\Permission\Exceptions\UnauthorizedException;
+use Illuminate\Validation\ValidationException;
 
 class ProjectsController extends Controller
 {
@@ -29,15 +40,16 @@ class ProjectsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \App\Model\Project
      */
-    public function index(Request $request){
+    public function index(Request $request)
+    {
         $user = auth()->user();
 
-        $projects = Project::when($request->get('search'), function($q)use($request){
+        $projects = Project::when($request->get('search'), function ($q) use ($request) {
             $searchItem = $request->get('search');
             return $q->where('name', 'LIKE', "%$searchItem%");
         });
 
-        if(!$user->isSuperAdmin()){
+        if (!$user->isSuperAdmin()) {
             $roles = $user->roles;
 
             $arr = [];
@@ -45,12 +57,12 @@ class ProjectsController extends Controller
             foreach ($roles as $role) {
                 $ex = explode('admin', $role->name);
 
-                if(isset($ex[1]) && !in_array($ex[1], $arr))
+                if (isset($ex[1]) && !in_array($ex[1], $arr))
                     $arr[] = $ex[1];
 
                 $ex = explode('editor', $role->name);
 
-                if(isset($ex[1]) && !in_array($ex[1], $arr))
+                if (isset($ex[1]) && !in_array($ex[1], $arr))
                     $arr[] = $ex[1];
             }
 
@@ -68,7 +80,8 @@ class ProjectsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \App\Model\Project
      */
-    public function store(Request $request){
+    public function store(Request $request)
+    {
 
         $request->validate([
             'name' => ['required', 'string', 'max:255', 'not_regex:/[#$%^&*()+=\-\[\]\';,\/{}|":<>?~\\\\]/'],
@@ -76,89 +89,23 @@ class ProjectsController extends Controller
         ]);
 
         $project = Project::create([
-        	'name' => $request->get('name'),
-        	'description' => $request->get('description'),
-        	'default_locale' => $request->get('default_locale'),
-        	'locales' => $request->get('default_locale'),
+            'name' => $request->get('name'),
+            'description' => $request->get('description'),
+            'default_locale' => $request->get('default_locale'),
+            'locales' => $request->get('default_locale'),
         ]);
 
-        Role::create(['name' => 'admin'.$project->id]);
-        Role::create(['name' => 'editor'.$project->id]);
+        Role::create(['name' => 'admin' . $project->id]);
+        Role::create(['name' => 'editor' . $project->id]);
 
-        if($request->get('type') == 2){
-            $pages = Collection::create(['name' => 'Pages', 'slug' => 'pages', 'project_id' => $project->id, 'order' => 1]);
-            $posts = Collection::create(['name' => 'Posts', 'slug' => 'posts', 'project_id' => $project->id, 'order' => 2]);
-            $categories = Collection::create(['name' => 'Categories', 'slug' => 'categories', 'project_id' => $project->id, 'order' => 3]);
-            $authors = Collection::create(['name' => 'Authors', 'slug' => 'authors', 'project_id' => $project->id, 'order' => 4]);
-            $tags = Collection::create(['name' => 'Tags', 'slug' => 'tags', 'project_id' => $project->id, 'order' => 5]);
-            $comments = Collection::create(['name' => 'Comments', 'slug' => 'comments', 'project_id' => $project->id, 'order' => 6]);
-            $globals = Collection::create(['name' => 'Globals', 'slug' => 'globals', 'project_id' => $project->id, 'order' => 7]);
-
-            $pages_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $pages->id, 'order' => 1,
-                'type' => 'text', 'label' => 'Title', 'name' => 'title', 'options' => '{"slug": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false, "message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $pages_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $pages->id, 'order' => 2,
-                'type' => 'slug', 'label' => 'URL', 'name' => 'url', 'options' => '{"slug": {"field": "title"},"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": true,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $pages_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $pages->id, 'order' => 3,
-                'type' => 'richtext', 'label' => 'Content', 'name' => 'content', 'options' => '{"slug": [],"media": [], "relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": false,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $pages_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $pages->id, 'order' => 4,
-                'type' => 'enumeration', 'label' => 'Menu Position', 'name' => 'menu-position', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": ["MainMenu","FooterMenu","Both"],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-
-            $posts_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $posts->id, 'order' => 1,
-                'type' => 'text', 'label' => 'Title', 'name' => 'title', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $posts_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $posts->id, 'order' => 2,
-                'type' => 'slug', 'label' => 'URL', 'name' => 'url', 'options' => '{"slug": {"field": "title"},"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": true,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $posts_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $posts->id, 'order' => 3,
-                'type' => 'longtext', 'label' => 'Excerpt', 'name' => 'excerpt', 'options' => '{"slug": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $posts_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $posts->id, 'order' => 4,
-                'type' => 'richtext', 'label' => 'Content', 'name' => 'content', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": false,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $posts_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $posts->id, 'order' => 5,
-                'type' => 'media', 'label' => 'Cover Image', 'name' => 'cover-image', 'options' => '{"slug": [],"media": {"type": 1},"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": false,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $posts_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $posts->id, 'order' => 6,
-                'type' => 'relation', 'label' => 'Category', 'name' => 'category', 'options' => '{"slug": [],"media": [],"relation": {"type": "1","collection": '.$categories->id.'},"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $posts_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $posts->id, 'order' => 7,
-                'type' => 'relation', 'label' => 'Author', 'name' => 'author', 'options' => '{"slug": [],"relation": {"type": 1,"collection": '.$authors->id.'},"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $posts_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $posts->id, 'order' => 8,
-                'type' => 'relation', 'label' => 'Tags', 'name' => 'tags', 'options' => '{"slug": [],"media": [],"relation": {"type": "2","collection": '.$tags->id.'},"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": false,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-
-            $categories_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $categories->id, 'order' => 1,
-                'type' => 'text', 'label' => 'Title', 'name' => 'title', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $categories_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $categories->id, 'order' => 1,
-                'type' => 'slug', 'label' => 'URL', 'name' => 'url', 'options' => '{"slug": {"field": "title"},"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": true,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-
-            $authors_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $authors->id, 'order' => 1,
-                'type' => 'text', 'label' => 'Name', 'name' => 'name', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $authors_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $authors->id, 'order' => 1,
-                'type' => 'longtext', 'label' => 'Info', 'name' => 'info', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": false,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $authors_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $authors->id, 'order' => 1,
-                'type' => 'media', 'label' => 'Avatar', 'name' => 'avatar', 'options' => '{"slug": [],"media": {"type": 1},"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": false,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $authors_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $authors->id, 'order' => 1,
-                'type' => 'text', 'label' => 'Facebook', 'name' => 'facebook', 'options' => '{"slug": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": false,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $authors_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $authors->id, 'order' => 1,
-                'type' => 'text', 'label' => 'Instagram', 'name' => 'instagram', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": false,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $authors_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $authors->id, 'order' => 1,
-                'type' => 'text', 'label' => 'Twitter', 'name' => 'twitter', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": false,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $authors_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $authors->id, 'order' => 1,
-                'type' => 'text', 'label' => 'Linkedin', 'name' => 'linkedin', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": false,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-
-            $tags_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $tags->id, 'order' => 1,
-                'type' => 'text', 'label' => 'Tag', 'name' => 'tag', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-
-            $comments_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $comments->id, 'order' => 1,
-                'type' => 'text', 'label' => 'Name', 'name' => 'name', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $comments_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $comments->id, 'order' => 1,
-                'type' => 'email', 'label' => 'E-mail', 'name' => 'e-mail', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $comments_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $comments->id, 'order' => 1,
-                'type' => 'longtext', 'label' => 'Comment', 'name' => 'comment', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $comments_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $comments->id, 'order' => 1,
-                'type' => 'relation', 'label' => 'Post', 'name' => 'post', 'options' => '{"slug": [],"relation": {"type": 1,"collection": '.$posts->id.'},"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": false,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-
-            $globals_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $globals->id, 'order' => 1,
-                'type' => 'slug', 'label' => 'Label', 'name' => 'label', 'options' => '{"slug": {"field": null},"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": true,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-            $globals_field = CollectionField::create(['project_id' => $project->id, 'collection_id' => $globals->id, 'order' => 1,
-                'type' => 'text', 'label' => 'Value', 'name' => 'value', 'options' => '{"slug": [],"media": [],"relation": [],"enumeration": [],"hideInContentList": false}', 'validations' => '{"unique": {"status": false,"message": null},"required": {"status": true,"message": null},"charcount": {"max": null,"min": null,"type": "Between","status": false,"message": null}}',]);
-
-
+        if ($request->get('type') == "blog") {
+            BlogTemplate::create($project);
         }
+
+        if ($request->get('type') == "shop") {
+            ShopTemplate::create($project);
+        }
+
 
         return response($project, 200);
     }
@@ -169,23 +116,291 @@ class ProjectsController extends Controller
      * @param int $id
      * @return \App\Models\Project
      */
-    public function show($id){
+    public function show($id)
+    {
         $user = auth()->user();
 
-        if(!$user->isSuperAdmin() && !$user->hasRole('admin'.$id) && !$user->hasRole('editor'.$id)){
-            throw UnauthorizedException::forRoles(['admin'.$id]);
+        if (!$user->isSuperAdmin() && !$user->hasRole('admin' . $id) && !$user->hasRole('editor' . $id)) {
+            throw UnauthorizedException::forRoles(['admin' . $id]);
         }
 
         $project = Project::with('collections')->findOrFail($id);
 
         $project->s3 = false;
         //Check if AWS S3 has been configured
-        if(config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret') && config('filesystems.disks.s3.region') && config('filesystems.disks.s3.bucket')){
+        if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret') && config('filesystems.disks.s3.region') && config('filesystems.disks.s3.bucket')) {
             $project->s3 = true;
         }
+        // dump(json_encode($project));
+
 
         return $project;
     }
+
+    /**
+     * Export project by id
+     *
+     * @param int $id
+     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\BinaryFileResponse
+     */
+    public function export($id)
+    {
+        $user = auth()->user();
+
+        // Récupérer un projet
+        $project = Project::with([
+            'collections',
+            'collections.fields',
+            'content',
+            'content.meta',
+            'media',
+            'webhooks',
+            'webhooks.logs'
+        ])->findOrFail($id);
+
+        $project->s3 = false;
+
+        // Check if AWS S3 has been configured
+        if (config('filesystems.disks.s3.key') && config('filesystems.disks.s3.secret') && config('filesystems.disks.s3.region') && config('filesystems.disks.s3.bucket')) {
+            $project->s3 = true;
+        }
+
+        $json = json_encode($project);
+
+        // Save the JSON data to a file within storage
+        $filePath = storage_path('app/public/data.json');
+        file_put_contents($filePath, $json);
+
+        // Return the JSON data as a downloadable file response
+        return response()->download($filePath)->deleteFileAfterSend(true);
+    }
+
+
+    /**
+     * Import project data from a JSON file request 
+     *
+     * @param Request $request The incoming request
+     */
+    public function import(Request $request)
+    {
+
+
+        try {
+
+            /**
+             * Begin database transaction
+             */
+            DB::beginTransaction();
+
+            /**
+             * Load JSON data into an array
+             *
+             * @return array
+             */
+            $data = $this->loadJsonData($request);
+
+            /**
+             * Get or create Project model
+             * 
+             * @param array $data Import data
+             * @return \App\Models\Project
+             */
+            $project = $this->getProject($data);
+
+            /**
+             * Import all collections and fields
+             *
+             * @param array $data Import data
+             * @param \App\Models\Project $project
+             */
+            $this->importCollections($data, $project);
+
+            /**
+             * Import associated media 
+             *
+             * @param array $data Import data
+             * @param \App\Models\Project $project  
+             */
+            $this->importMedia($data, $project);
+
+            /**
+             * Commit import transaction 
+             */
+            DB::commit();
+
+            // Success response 
+            return response($project, 200);
+            
+        } catch (ValidationException $e) {
+
+            // Catch validation errors
+            return response()->json([
+                'message' => $e->getMessage(),
+                'errors' => $e->errors()
+            ], 422);
+        } catch (Exception $e) {
+
+            // Rollback on any errors
+            DB::rollBack();
+
+            // Generic error response
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Load JSON data from the uploaded file in the request.
+     *
+     * @param Request $request The incoming request
+     * @return array|null Parsed JSON data or null if parsing fails
+     */
+    protected function loadJsonData(Request $request): ?array
+    {
+        // Check if a file named 'json_file' exists in the request
+        if ($request->hasFile('json_file')) {
+            $json_file = $request->file('json_file');
+
+            // Check if the uploaded file is valid
+            if ($json_file->isValid()) {
+                // Read the content of the uploaded file
+                $json_content = file_get_contents($json_file->path());
+
+                // Attempt to decode the JSON content
+                $data = json_decode($json_content, true);
+
+                // Check if JSON decoding was successful
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    return $data; // Return the parsed JSON data
+                }
+            }
+        }
+
+        // If any step fails, return null
+        return null;
+    }
+
+
+    protected function getProject(array $data)
+    {
+
+        $project = Project::create([
+            'uuid' => $data['uuid'],
+            'name' => $data['name'],
+            'description' => $data['description'],
+            'default_locale' => $data['default_locale'],
+            'locales' => $data['locales'],
+            'disk' => $data['disk'],
+            'public_api' => $data['public_api'],
+        ]);
+
+
+        return $project;
+    }
+
+    /**
+     * Import all collections and their associated data
+     *
+     * @param array $data Import data
+     * @param \App\Models\Project $project
+     * @return void
+     */
+    protected function importCollections(array $data, Project $project)
+    {
+        if (isset($data['collections'])) {
+            foreach ($data['collections'] as $collection) {
+                $newCollection = Collection::create([
+                    'name' => $collection['name'],
+                    'slug' => $collection['slug'],
+                    'order' => $collection['order'],
+                    'project_id' => $project->id,
+                ]);
+                if (isset($collection['fields'])) {
+                    foreach ($collection['fields'] as $field) {
+                        $newField = CollectionField::create([
+                            'type' => $field['type'],
+                            'label' => $field['label'],
+                            'name' => $field['name'],
+                            'description' => $field['description'],
+                            'placeholder' => $field['placeholder'],
+                            'options' => $field['options'],
+                            'validations' => $field['validations'],
+                            'order' => $field['order'],
+                            'project_id' => $project->id,
+                            'collection_id' => $newCollection->id,
+                        ]);
+
+
+
+                        if (isset($data['content'])) {
+                            foreach ($data['content'] as $content) {
+                                if ($content['collection_id'] == $collection['id']) {
+                                    $newContent = Content::create([
+                                        'project_id' => $project->id,
+                                        'collection_id' => $newCollection->id,
+                                        'locale' => $content['locale'],
+                                    ]);
+
+                                    if (isset($content['meta'])) {
+                                        foreach ($content['meta'] as $meta) {
+                                            if ($meta['collection_id'] == $content['id']) {
+                                                ContentMeta::create([
+                                                    'project_id' => $project->id,
+                                                    'field_name' => $newField->name,
+                                                    'collection_id' => $newCollection->id,
+                                                    'value' => $meta['value'],
+                                                ]);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (isset($data['webhooks'])) {
+                    foreach ($data['webhooks'] as $webhook) {
+                        if ($webhook['collection_ids'] == $collection['id']) {
+                            Webhook::create([
+                                'project_id' => $project->id,
+                                'collection_ids' => $newCollection->id,
+                                'name' => $webhook['name'],
+                                'description' => $webhook['description'],
+                                'url' => $webhook['url'],
+                                'secret' => $webhook['secret'],
+                                'events' => $webhook['events'],
+                                'sources' => $webhook['sources'],
+                                'payload' => $webhook['payload'],
+                                'status' => $webhook['status'],
+                                'logs' => $webhook['logs'],
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    protected function importMedia(array $data, Project $project)
+    {
+        if (isset($data['media'])) {
+            foreach ($data['media'] as $media) {
+                Media::create([
+                    'project_id' => $project->id,
+                    'name' => $media['name'],
+                    'type' => $media['type'],
+                    'size' => $media['size'],
+                    'width' => $media['width'],
+                    'height' => $media['height'],
+                    'caption' => $media['caption'],
+                    'disk' => $media['disk'],
+                ]);
+            }
+        }
+    }
+
 
     /**
      * Update project
@@ -194,25 +409,26 @@ class ProjectsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \App\Models\Project
      */
-    public function update($id, Request $request){
+    public function update($id, Request $request)
+    {
         $user = auth()->user();
 
-        if(!$user->isSuperAdmin() && !$user->hasRole('admin'.$id)){
-            throw UnauthorizedException::forRoles(['admin'.$id]);
+        if (!$user->isSuperAdmin() && !$user->hasRole('admin' . $id)) {
+            throw UnauthorizedException::forRoles(['admin' . $id]);
         }
 
         $project = Project::findOrFail($id);
 
         $request->validate([
             'name' => 'required|max:255',
-        ],[
+        ], [
             'name.required' => __('Project name is required')
         ]);
 
         $project->update([
-        	'name' => $request->get('name'),
-        	'description' => $request->get('description'),
-        	'disk' => $request->get('disk')
+            'name' => $request->get('name'),
+            'description' => $request->get('description'),
+            'disk' => $request->get('disk')
         ]);
 
         return response($project, 200);
@@ -224,11 +440,12 @@ class ProjectsController extends Controller
      * @param int $id
      * @return \Illuminate\Http\Response
      */
-    public function delete($id){
+    public function delete($id)
+    {
         $user = auth()->user();
 
-        if(!$user->isSuperAdmin()){
-            throw UnauthorizedException::forRoles(['admin'.$id]);
+        if (!$user->isSuperAdmin()) {
+            throw UnauthorizedException::forRoles(['admin' . $id]);
         }
 
         $project = Project::findOrFail($id);
@@ -250,10 +467,10 @@ class ProjectsController extends Controller
         $project->webhook_logs()->delete();
         $project->forms()->delete();
 
-        $admin_role = Role::where('name', 'admin'.$id)->delete();
-        $editor_role = Role::where('name', 'editor'.$id)->delete();
+        $admin_role = Role::where('name', 'admin' . $id)->delete();
+        $editor_role = Role::where('name', 'editor' . $id)->delete();
 
-        if($project->delete()){
+        if ($project->delete()) {
             return response([], 200);
         } else {
             return response([], 404);
@@ -266,7 +483,8 @@ class ProjectsController extends Controller
      * @param int $id
      * @return \App\Models\Project
      */
-    public function locales($id){
+    public function locales($id)
+    {
         return Project::findOrFail($id);
     }
 
@@ -277,20 +495,21 @@ class ProjectsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return void
      */
-    public function addLocale($id, Request $request){
+    public function addLocale($id, Request $request)
+    {
         $project = Project::findOrFail($id);
 
         $project_locales = explode(',', $project->locales);
 
-        if(in_array($request->get('locale'), $project_locales)){
+        if (in_array($request->get('locale'), $project_locales)) {
             return response([], 422);
         }
 
-        if(!in_array($request->get('locale'), $project_locales)){
-            if($project->locales === null){
+        if (!in_array($request->get('locale'), $project_locales)) {
+            if ($project->locales === null) {
                 $project->locales = $request->get('locale');
             } else {
-                $project->locales = $project->locales.",".$request->get('locale');
+                $project->locales = $project->locales . "," . $request->get('locale');
             }
         }
 
@@ -304,7 +523,8 @@ class ProjectsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return void
      */
-    public function changeDefaultLocale($id, Request $request){
+    public function changeDefaultLocale($id, Request $request)
+    {
         $project = Project::findOrFail($id);
 
         $project->default_locale = $request->get('locale');
@@ -318,10 +538,11 @@ class ProjectsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return void
      */
-    public function deleteLocale($id, Request $request){
+    public function deleteLocale($id, Request $request)
+    {
         $project = Project::findOrFail($id);
 
-        if($request->get('locale') == $project->default_locale){
+        if ($request->get('locale') == $project->default_locale) {
             return response([], 422);
         }
 
@@ -329,8 +550,8 @@ class ProjectsController extends Controller
 
         $localesStr = '';
         foreach ($project_locales as $locale) {
-            if($locale != $request->get('locale')){
-                $localesStr .= $locale.',';
+            if ($locale != $request->get('locale')) {
+                $localesStr .= $locale . ',';
             }
         }
         $project->locales = rtrim($localesStr, ',');
@@ -343,14 +564,23 @@ class ProjectsController extends Controller
      * @param int $id
      * @return mixed
      */
-    public function users($id){
+    public function users($id)
+    {
         $project = Project::findOrFail($id);
 
-        $super_admins = User::whereHas('roles', function($q){ $q->where('name', 'super_admin'); })->get();
-        $users = User::whereDoesntHave('roles', function($q){ $q->where('name', 'super_admin'); })->get();
+        $super_admins = User::whereHas('roles', function ($q) {
+            $q->where('name', 'super_admin');
+        })->get();
+        $users = User::whereDoesntHave('roles', function ($q) {
+            $q->where('name', 'super_admin');
+        })->get();
 
-        $admins = User::whereHas('roles', function($q)use($project){ $q->where('name', 'admin'.$project->id); })->get();
-        $editors = User::whereHas('roles', function($q)use($project){ $q->where('name', 'editor'.$project->id); })->get();
+        $admins = User::whereHas('roles', function ($q) use ($project) {
+            $q->where('name', 'admin' . $project->id);
+        })->get();
+        $editors = User::whereHas('roles', function ($q) use ($project) {
+            $q->where('name', 'editor' . $project->id);
+        })->get();
 
         $data['project'] = $project;
         $data['super_admins'] = $super_admins;
@@ -368,20 +598,21 @@ class ProjectsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return void
      */
-    public function assignUser($id, Request $request){
+    public function assignUser($id, Request $request)
+    {
         $project = Project::findOrFail($id);
 
         $user = User::findOrFail($request->get('user_id'));
 
-        $role = Role::where('name', $request->get('role').$project->id)->first();
+        $role = Role::where('name', $request->get('role') . $project->id)->first();
 
-        if($role){
+        if ($role) {
             $user->assignRole($role);
         } else {
-            $admin = Role::create(['name' => 'admin'.$project->id]);
-            $editor = Role::create(['name' => 'editor'.$project->id]);
+            $admin = Role::create(['name' => 'admin' . $project->id]);
+            $editor = Role::create(['name' => 'editor' . $project->id]);
 
-            $role = Role::where('name', $request->get('role').$project->id)->first();
+            $role = Role::where('name', $request->get('role') . $project->id)->first();
             $user->assignRole($role);
         }
     }
@@ -393,14 +624,15 @@ class ProjectsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function removeUser($id, Request $request){
+    public function removeUser($id, Request $request)
+    {
         $project = Project::findOrFail($id);
 
         $user = User::findOrFail($request->get('user_id'));
 
-        $role = Role::where('name', $request->get('role').$project->id)->first();
+        $role = Role::where('name', $request->get('role') . $project->id)->first();
 
-        if($user->hasRole($role)){
+        if ($user->hasRole($role)) {
             $user->removeRole($role);
 
             return response([], 200);
@@ -416,7 +648,8 @@ class ProjectsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return void
      */
-    public function newUser($id, Request $request){
+    public function newUser($id, Request $request)
+    {
         $project = Project::findOrFail($id);
 
         $request->validate([
@@ -438,7 +671,8 @@ class ProjectsController extends Controller
      * @param int $id
      * @return mixed
      */
-    public function api($id){
+    public function api($id)
+    {
         $project = Project::findOrFail($id);
 
         $data['project'] = $project;
@@ -454,7 +688,8 @@ class ProjectsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return string $token->plainTextToken
      */
-    public function newToken($id, Request $request){
+    public function newToken($id, Request $request)
+    {
         $project = Project::findOrFail($id);
 
         $request->validate([
@@ -476,7 +711,8 @@ class ProjectsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return void
      */
-    public function updateToken($id, Request $request){
+    public function updateToken($id, Request $request)
+    {
         $project = Project::findOrFail($id);
 
         $token_id = $request->get('id');
@@ -499,7 +735,8 @@ class ProjectsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return void
      */
-    public function deleteToken($id, Request $request){
+    public function deleteToken($id, Request $request)
+    {
         $project = Project::findOrFail($id);
 
         $project->tokens()->where('id', $request->get('id'))->delete();
@@ -511,7 +748,8 @@ class ProjectsController extends Controller
      * @param int $id
      * @return void
      */
-    public function enablePublicAPIAccess($id){
+    public function enablePublicAPIAccess($id)
+    {
         $project = Project::findOrFail($id);
 
         $project->public_api = true;
@@ -524,7 +762,8 @@ class ProjectsController extends Controller
      * @param int $id
      * @return void
      */
-    public function disablePublicAPIAccess($id){
+    public function disablePublicAPIAccess($id)
+    {
         $project = Project::findOrFail($id);
 
         $project->public_api = false;
